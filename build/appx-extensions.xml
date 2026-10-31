@@ -1,0 +1,4 @@
+
+        <desktop:Extension Category="windows.startupTask" Executable="app\PocketDeck.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="PocketDeckStartup" Enabled="false" DisplayName="PocketDeck" />
+        </desktop:Extension>

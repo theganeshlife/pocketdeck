@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en" data-theme="obsidian">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PocketDeck</title>
+  <link rel="icon" href="/app/icon-192.png">
+  <link rel="stylesheet" href="/app/deck.css">
+  <link rel="stylesheet" href="editor.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <span>PocketDeck</span>
+    </div>
+    <nav id="pages" class="pages" aria-label="Pages"></nav>
+    <div class="top-actions">
+      <button id="devices-pill" class="pill" title="Connected devices"><span class="dot"></span><span id="devices-text">No device connected</span></button>
+      <button id="theme-toggle" class="icon-btn" title="Switch light / dark"><i class="ico" data-icon="sun-moon"></i></button>
+      <button id="open-settings" class="icon-btn" title="Settings"><i class="ico" data-icon="settings-2"></i></button>
+      <button id="open-connect" class="btn accent"><i class="ico" data-icon="tablet-smartphone"></i>Connect device</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <section class="canvas">
+      <div class="device">
+        <div class="device-screen">
+          <div id="preview-bg" class="preview-bg" aria-hidden="true"></div>
+          <div class="ambient" aria-hidden="true"></div>
+          <div class="preview-shell">
+            <div class="dk-topbar pv-top">
+              <div class="dk-topbar-in">
+                <div class="dk-tb-left"><span id="pv-badge" class="pv-badge"></span></div>
+                <button id="pv-now" class="dk-now pv-click" type="button" title="Clock settings"></button>
+                <div class="dk-tb-right"><button id="pv-weather" class="dk-wx pv-click" type="button" title="Weather settings" hidden></button></div>
+              </div>
+            </div>
+            <div id="stage" class="preview-stage"></div>
+            <div class="dk-botbar pv-bottom">
+              <div class="dk-botbar-in">
+                <div class="dk-bb-left"><button id="pv-lock" class="dk-lockkey" type="button" aria-label="Lock PC (always here, can’t be changed)" title="Locks the PC. This key is always here and can’t be changed."></button></div>
+                <div class="dk-bb-center"><div id="pv-dots" class="dk-dots" hidden></div></div>
+                <div class="dk-bb-right pv-sound" aria-hidden="true" title="On the device: mute, volume, microphone and rotation lock">
+                  <span class="dk-round" id="pv-snd"></span><span class="pv-slider"><i></i></span><span class="dk-round" id="pv-mic"></span><span class="dk-round" id="pv-rot"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-tools">
+        <div class="seg small preview-toggle" id="preview-orient" role="group" aria-label="Preview shape">
+          <button data-o="auto" class="on" aria-pressed="true" title="Show the deck at the size and shape of your connected Android device">Match device</button><button data-o="landscape" aria-pressed="false">Landscape</button><button data-o="portrait" aria-pressed="false">Portrait</button>
+        </div>
+        <span id="preview-note" class="key-count" aria-live="polite" hidden></span>
+        <span id="key-count" class="key-count"></span>
+      </div>
+      <p class="canvas-hint">Click a key to edit it · Click + to add a key · Drag keys to rearrange · <kbd>Del</kbd> removes · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</p>
+    </section>
+
+    <aside id="inspector" class="inspector">
+      <div id="inspector-empty" class="empty-state">
+        <div class="empty-icon"><i class="ico" data-icon="mouse-pointer-click"></i></div>
+        <h2>Select a key</h2>
+        <p>Choose any key on the deck to set what it does and how it looks.</p>
+      </div>
+
+      <div id="inspector-body" hidden>
+        <div class="insp-head">
+          <div>
+            <div class="eyebrow" id="key-label">Key 1</div>
+            <h2 id="key-title">Untitled</h2>
+          </div>
+          <div class="insp-head-actions">
+            <button id="key-clear" class="icon-btn" title="Remove this key" aria-label="Remove this key"><i class="ico" data-icon="trash-2"></i></button>
+          </div>
+        </div>
+
+        <div class="panel-scroll">
+          <!-- ACTION -->
+          <section class="group">
+            <h3>Action</h3>
+            <div id="action-types" class="type-grid"></div>
+            <div id="action-fields" class="fields"></div>
+          </section>
+
+          <!-- APPEARANCE -->
+          <section class="group">
+            <h3>Icon</h3>
+            <div class="seg" id="icon-tabs">
+              <button data-tab="lucide">Icons</button>
+              <button data-tab="emoji">Emoji</button>
+              <button data-tab="image">Image</button>
+              <button data-tab="none">None</button>
+            </div>
+            <div id="icon-pane"></div>
+          </section>
+
+          <section class="group">
+            <h3 id="key-size-label">Key size</h3>
+            <div class="seg" id="key-size" role="group" aria-labelledby="key-size-label">
+              <button data-size="featured">Most used</button><button data-size="normal">Normal</button><button data-size="less">Less used</button>
+            </div>
+            <p class="help">Most used keys are the largest and come first (on the left, or at the top when the device is upright). Less used keys are the smallest and come last. The keys arrange themselves to fit the screen.</p>
+          </section>
+
+          <section class="group">
+            <div class="group-head">
+              <h3>Caption</h3>
+              <label class="switch"><input id="caption-show" type="checkbox" aria-label="Show a caption"><span></span></label>
+            </div>
+            <input id="caption-text" class="input" maxlength="24" placeholder="For example, Music" aria-label="Caption text">
+            <div class="row-field caption-pos-row">
+              <span id="caption-pos-label">Position</span>
+              <div class="seg" id="caption-pos" role="group" aria-labelledby="caption-pos-label">
+                <button data-pos="top">Top</button><button data-pos="bottom">Bottom</button><button data-pos="left">Left</button><button data-pos="right">Right</button><button data-pos="center">Centre</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="group">
+            <h3>Key colour</h3>
+            <div id="swatches" class="swatches"></div>
+          </section>
+        </div>
+
+        <div class="insp-foot">
+          <button id="key-test" class="btn wide"><i class="ico" data-icon="zap"></i>Test on this PC</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Connect device dialog -->
+  <dialog id="connect-dialog" class="dialog">
+    <form method="dialog" class="dialog-close"><button class="icon-btn" title="Close"><i class="ico" data-icon="x"></i></button></form>
+    <h2>Connect your Android device</h2>
+    <p class="muted">Any Android phone or tablet with a touch screen works. It needs to be on the same Wi‑Fi network as this PC.</p>
+    <div class="connect-grid">
+      <div class="qr-card">
+        <img id="qr" alt="QR code for pairing">
+        <p>Scan this code with <b>Scan QR code</b> in the PocketDeck Android app, or with the device’s camera to open the deck in its web browser. The code and PIN change every minute.</p>
+      </div>
+      <div class="pair-info">
+        <div class="pin-block">
+          <div class="eyebrow">Pairing PIN</div>
+          <div id="pin" class="pin">------</div>
+          <p id="pin-timer" class="muted small" aria-live="off"></p>
+          <button id="new-pin" class="link-btn">Make a new PIN now</button>
+        </div>
+        <div class="eyebrow">PC address</div>
+        <div id="addresses" class="addresses"></div>
+        <p class="muted small">In the PocketDeck Android app, this PC appears by itself. Tap it, type the PIN, then tap Connect.</p>
+      </div>
+    </div>
+    <h3 class="sub">Paired devices</h3>
+    <p class="muted small">Every device you have paired, listed once. Trusted devices reconnect by themselves whenever PocketDeck is running on this PC. A one‑time connection is removed when the device disconnects. This PC decides: a device you disconnect and forget here needs a new PIN to connect again.</p>
+    <div id="device-list" class="device-list"></div>
+  </dialog>
+
+  <!-- Settings dialog -->
+  <dialog id="settings-dialog" class="dialog">
+    <form method="dialog" class="dialog-close"><button class="icon-btn" title="Close"><i class="ico" data-icon="x"></i></button></form>
+    <h2>Settings</h2>
+
+    <h3 class="sub">Your name on the deck</h3>
+    <div class="profile-card">
+      <button id="profile-photo" class="avatar-btn" title="Choose a photo"></button>
+      <div class="profile-fields">
+        <input id="profile-name" class="input" maxlength="30" placeholder="Your name, for example Ganesh" autocomplete="off">
+        <div class="profile-preview" id="profile-preview"></div>
+        <div class="profile-actions"><button id="profile-photo-pick" class="link-btn">Choose photo</button><button id="profile-photo-adjust" class="link-btn">Adjust photo</button><button id="profile-photo-remove" class="link-btn danger-link">Remove photo</button></div>
+      </div>
+    </div>
+    <div class="settings-list" style="margin-top:10px">
+      <label class="setting"><span>Show my name and photo on the deck</span><span class="switch"><input id="profile-show" type="checkbox"><span></span></span></label>
+    </div>
+    <input type="file" id="profile-file" accept="image/*" hidden>
+
+    <h3 class="sub">Theme</h3>
+    <div id="theme-cards" class="theme-cards"></div>
+
+    <h3 class="sub">Accent colour</h3>
+    <div id="accent-swatches" class="swatches"></div>
+
+    <h3 class="sub">Icons</h3>
+    <div class="settings-list">
+      <div class="setting">
+        <span id="icon-colours-label">Icon colours</span>
+        <div class="seg small" id="set-icon-colours" role="group" aria-labelledby="icon-colours-label"><button data-c="original">Original</button><button data-c="greyscale">Greyscale</button></div>
+      </div>
+    </div>
+
+    <h3 class="sub">Deck background</h3>
+    <div class="settings-list">
+      <div class="setting col">
+        <span>Choose a photo to show behind the keys, or none.</span>
+        <div id="bg-choices" class="bg-choices"></div>
+        <label class="row-field" id="bg-overlay-row">
+          <span>Theme colour over the photo</span>
+          <div class="range-wrap"><input id="bg-overlay" type="range" min="0" max="0.95" step="0.05"><output id="bg-overlay-out">60%</output></div>
+        </label>
+      </div>
+    </div>
+    <input type="file" id="bg-file" accept="image/*" hidden>
+
+    <h3 class="sub">Clock</h3>
+    <div class="settings-list">
+      <div class="setting">
+        <span id="clock-style-label">Clock style</span>
+        <div class="seg small" id="set-clock-style" role="group" aria-labelledby="clock-style-label"><button data-style="digital">Digital</button><button data-style="analog">Analogue</button></div>
+      </div>
+      <label class="setting"><span>24‑hour time</span><span class="switch"><input id="set-24h" type="checkbox"><span></span></span></label>
+      <label class="setting"><span>Show seconds</span><span class="switch"><input id="set-seconds" type="checkbox"><span></span></span></label>
+      <label class="setting"><span>Show date</span><span class="switch"><input id="set-date" type="checkbox"><span></span></span></label>
+    </div>
+
+    <h3 class="sub">Weather</h3>
+    <div class="settings-list">
+      <label class="setting"><span>Show temperature</span><span class="switch"><input id="set-weather" type="checkbox"><span></span></span></label>
+      <div class="setting">
+        <span>Units</span>
+        <div class="seg small" id="set-unit"><button data-unit="C">°C</button><button data-unit="F">°F</button></div>
+      </div>
+      <div class="setting col">
+        <span>Location <small id="loc-current" class="muted"></small></span>
+        <div class="loc-search">
+          <input id="loc-input" class="input" placeholder="Search for your city">
+          <div id="loc-results" class="loc-results"></div>
+        </div>
+        <p class="help">To show the temperature, only the city you pick is sent to a free weather service. Your exact location is never used, and you can turn this off above.</p>
+      </div>
+    </div>
+
+    <h3 class="sub">Device & PC</h3>
+    <div class="settings-list">
+      <label class="setting"><span>When a key is pressed on the device</span>
+        <select id="set-feedback" class="input auto">
+          <option value="both">Short vibration and click sound</option>
+          <option value="vibrate">Short vibration only</option>
+          <option value="sound">Click sound only</option>
+          <option value="none">Nothing</option>
+        </select></label>
+      <label class="setting" id="login-row"><span>Start PocketDeck with Windows</span><span class="switch"><input id="set-login" type="checkbox"><span></span></span></label>
+      <div class="setting" id="login-store-row" hidden><span>Start PocketDeck with Windows</span><button id="login-store" class="btn">Open start‑up settings</button></div>
+    </div>
+
+    <h3 class="sub">Privacy</h3>
+    <div class="settings-list">
+      <div class="setting col"><p class="help" id="privacy-text"></p>
+        <div class="row-btns"><button id="log-view" class="btn">View activity log</button><button id="log-open" class="btn">Open log folder</button><button id="log-clear" class="btn">Clear log</button></div>
+        <pre id="log-text" class="log-text" hidden></pre>
+      </div>
+    </div>
+
+    <h3 class="sub">About</h3>
+    <div class="about-card">
+      <div class="about-head">
+        <div class="brand-mark big" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div><b>PocketDeck</b><span class="muted" id="about-version"></span></div>
+      </div>
+      <p>Created by <b>Ganesh Acharya</b></p>
+      <p class="muted" id="about-blurb"></p>
+      <div class="row-btns">
+        <a id="about-momo" class="btn accent" target="_blank" rel="noopener">Buy me a plate of momo</a>
+        <a id="about-feedback" class="btn" target="_blank" rel="noopener">Contact and feedback</a>
+        <button id="about-rate" class="btn">Rate PocketDeck</button>
+        <button id="check-updates" class="btn">Check for updates</button>
+      </div>
+      <p id="update-status" class="update-status muted small" role="status"></p>
+    </div>
+  </dialog>
+
+  <!-- Installed apps dialog -->
+  <dialog id="apps-dialog" class="dialog apps-dialog">
+    <form method="dialog" class="dialog-close"><button class="icon-btn" title="Close"><i class="ico" data-icon="x"></i></button></form>
+    <h2>Choose an app</h2>
+    <p class="muted">Everything in your Start menu, including apps from the Store.</p>
+    <div class="apps-toolbar">
+      <input id="apps-search" class="input" placeholder="Search apps" autocomplete="off" spellcheck="false">
+      <button id="apps-refresh" class="btn" title="Look for newly installed apps"><i class="ico" data-icon="refresh-cw"></i>Refresh</button>
+    </div>
+    <div id="apps-list" class="apps-list"></div>
+  </dialog>
+
+  <!-- Background cropper -->
+  <dialog id="bg-dialog" class="dialog bg-dialog" aria-labelledby="bg-dialog-h">
+    <form method="dialog" class="dialog-close"><button class="icon-btn" title="Close" aria-label="Close"><i class="ico" data-icon="x"></i></button></form>
+    <h2 id="bg-dialog-h">Adjust the background</h2>
+    <p class="muted" id="crop-help">Drag the photo to move it, and use the slider or mouse wheel to zoom. The theme colour sits over the photo so the keys stay easy to read.</p>
+    <div id="crop-frame" class="crop-frame" tabindex="0" aria-label="Photo position. Use the arrow keys to move it.">
+      <img id="crop-img" alt="" draggable="false">
+      <div id="crop-overlay" class="crop-overlay"></div>
+      <div id="crop-ring" class="crop-ring" aria-hidden="true"></div>
+      <div id="crop-keys" class="crop-keys" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <label class="row-field"><span>Zoom</span><div class="range-wrap"><input id="crop-zoom" type="range" min="1" max="4" step="0.01" value="1"><output id="crop-zoom-out">100%</output></div></label>
+    <label class="row-field" id="crop-overlay-row"><span>Theme colour over the photo</span><div class="range-wrap"><input id="crop-overlay-range" type="range" min="0" max="0.95" step="0.05" value="0.6"><output id="crop-overlay-out">60%</output></div></label>
+    <div class="row-btns end"><button id="crop-cancel" class="btn">Cancel</button><button id="crop-apply" class="btn accent">Use this background</button></div>
+  </dialog>
+
+  <!-- Rating -->
+  <dialog id="rate-dialog" class="dialog small-dialog" aria-labelledby="rate-h">
+    <h2 id="rate-h">Did you like PocketDeck?</h2>
+    <p class="muted">Choose a star rating. Only the number of stars is sent, nothing about you.</p>
+    <div class="stars" role="radiogroup" aria-labelledby="rate-h">
+      <button type="button" role="radio" aria-checked="false" data-stars="1" aria-label="1 star">★</button>
+      <button type="button" role="radio" aria-checked="false" data-stars="2" aria-label="2 stars">★</button>
+      <button type="button" role="radio" aria-checked="false" data-stars="3" aria-label="3 stars">★</button>
+      <button type="button" role="radio" aria-checked="false" data-stars="4" aria-label="4 stars">★</button>
+      <button type="button" role="radio" aria-checked="false" data-stars="5" aria-label="5 stars">★</button>
+    </div>
+    <div class="row-btns end"><button id="rate-never" class="btn">Don’t ask again</button><button id="rate-later" class="btn">Not now</button></div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="/app/about.js"></script>
+  <script src="/app/deck.js"></script>
+  <script src="editor.js"></script>
+</body>
+</html>
