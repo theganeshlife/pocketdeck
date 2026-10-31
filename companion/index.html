@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en" data-theme="obsidian">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0c11">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>PocketDeck</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="deck.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="bg-photo" class="bg-photo" aria-hidden="true"></div>
+  <div id="ambient" class="ambient" aria-hidden="true"></div>
+
+  <!-- ============================================================ Connect screen -->
+  <main id="connect" class="screen" hidden>
+    <div class="connect-card">
+      <header class="topline">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div>
+            <h1 class="t-title">PocketDeck</h1>
+            <p class="t-small muted">Control your PC from this device</p>
+          </div>
+        </div>
+        <button id="open-menu" class="icon-button" type="button" aria-label="Menu" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </header>
+
+      <section id="saved" class="block" hidden aria-labelledby="saved-h">
+        <h2 id="saved-h" class="t-heading">Your PCs</h2>
+        <div id="saved-list" class="list"></div>
+      </section>
+
+      <section id="discovered" class="block" hidden aria-labelledby="found-h">
+        <h2 id="found-h" class="t-heading">PCs on your Wi‑Fi</h2>
+        <div id="found-list" class="list"></div>
+      </section>
+
+      <section class="block" aria-labelledby="new-h">
+        <h2 id="new-h" class="t-heading">Connect a PC</h2>
+        <form id="connect-form" autocomplete="off" novalidate>
+          <label class="field">
+            <span class="t-small">PC address</span>
+            <input id="host" class="t-body" inputmode="url" placeholder="For example 192.168.1.20:8765" spellcheck="false" autocapitalize="off" aria-describedby="connect-help">
+          </label>
+          <label class="field">
+            <span class="t-small">PIN shown on your PC</span>
+            <input id="pin" class="pin" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" aria-describedby="connect-help">
+          </label>
+          <p id="connect-error" class="error t-small" role="alert"></p>
+          <div class="button-row">
+            <button id="connect-btn" class="primary" type="submit">Connect</button>
+            <button id="scan-btn" class="secondary" type="button" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 12h8"/></svg>
+              Scan QR code
+            </button>
+          </div>
+        </form>
+        <p id="connect-help" class="t-small muted help">On your PC, open PocketDeck and choose <b>Connect device</b>. Type the address and PIN shown there, or scan the QR code. The PIN changes every minute. Both devices need to be on the same Wi‑Fi.</p>
+      </section>
+
+      <footer class="credit t-small muted">
+        <span class="line">PocketDeck <span class="app-version"></span></span>
+        <span class="line">Created by <b>Ganesh Acharya</b></span>
+      </footer>
+    </div>
+  </main>
+
+  <!-- ============================================================ Deck screen -->
+  <main id="deck" class="screen" hidden>
+    <h1 class="sr-only">PocketDeck</h1>
+    <header class="dk-topbar deck-top">
+      <div class="dk-topbar-in">
+        <div class="dk-tb-left">
+          <button id="status" class="status" type="button" aria-haspopup="dialog" aria-label="Your PCs and options"><span class="dot" aria-hidden="true"></span><span id="status-avatar" class="avatar" hidden></span><span id="status-name"></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        </div>
+        <div id="now" class="dk-now" role="timer" aria-live="off"></div>
+        <div class="dk-tb-right">
+          <div id="weather" class="dk-wx" role="img" hidden></div>
+          <div id="session-timer" class="dk-timer" aria-live="off"><span class="long"></span><span class="short"></span></div>
+        </div>
+      </div>
+    </header>
+    <div id="stage" class="deck-stage"></div>
+    <div id="page-name" class="page-name t-small" aria-live="polite"></div>
+    <footer class="dk-botbar deck-bottom">
+      <div class="dk-botbar-in">
+        <div class="dk-bb-left">
+          <button id="lock-pc" class="dk-lockkey" type="button" aria-label="Lock PC" title="Lock your PC"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></button>
+        </div>
+        <div class="dk-bb-center"><div id="dots" class="dk-dots" hidden></div></div>
+        <div class="dk-bb-right">
+          <button id="snd-mute" class="dk-round" type="button" aria-pressed="false" aria-label="Mute sound" disabled></button>
+          <input id="volume" class="dk-volume" type="range" min="0" max="100" step="1" value="50" aria-label="Volume" disabled>
+          <button id="mic-mute" class="dk-round" type="button" aria-pressed="false" aria-label="Mute microphone" disabled></button>
+          <button id="rot-lock" class="dk-round rot-lock" type="button" aria-pressed="false" aria-label="Lock rotation"></button>
+        </div>
+      </div>
+    </footer>
+    <div id="overlay" class="overlay" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <p id="overlay-text" class="t-body" role="status">Reconnecting…</p>
+      <button id="overlay-switch" class="secondary" type="button">Choose another PC</button>
+    </div>
+  </main>
+
+  <div id="toast" class="toast t-body" role="status" aria-live="polite"></div>
+
+  <!-- ============================================================ PC switcher (from the name at the top left) -->
+  <div id="pc-sheet" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="pc-sheet-h">
+      <h2 id="pc-sheet-h" class="t-heading">Your PCs</h2>
+      <div id="pc-list" class="list"></div>
+      <div class="menu">
+        <button id="act-another" class="menu-item" type="button">Connect another PC</button>
+        <button id="act-reload" class="menu-item" type="button">Reconnect</button>
+        <button id="act-fullscreen" class="menu-item" type="button">Full screen</button>
+        <button id="act-disconnect" class="menu-item" type="button">Disconnect</button>
+        <button id="act-forget" class="menu-item danger" type="button">Disconnect and forget this PC</button>
+        <button id="act-more" class="menu-item" type="button">About, updates and history</button>
+      </div>
+      <button class="menu-item muted close-sheet" type="button">Close</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ Main menu (connect screen and "About, updates and history") -->
+  <div id="home-menu" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="home-menu-h">
+      <h2 id="home-menu-h" class="t-heading">Menu</h2>
+      <div class="menu">
+        <button class="menu-item" type="button" data-info="about">About PocketDeck</button>
+        <button class="menu-item" type="button" data-info="history">Connection history</button>
+        <button class="menu-item" type="button" data-info="updates">Check for updates</button>
+        <a class="menu-item about-feedback" target="_blank" rel="noopener">Contact and feedback</a>
+        <button class="menu-item" type="button" id="menu-rate">Rate PocketDeck</button>
+      </div>
+      <button class="menu-item muted close-sheet" type="button">Close</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ Information panel (About, history, updates) -->
+  <div id="info-sheet" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="info-h">
+      <h2 id="info-h" class="t-heading"></h2>
+      <div id="info-body" class="info-body t-body"></div>
+      <button class="menu-item muted close-sheet" type="button">Close</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ Save this PC? (after a new pairing) -->
+  <div id="save-dialog" class="sheet" hidden>
+    <div class="sheet-card" role="alertdialog" aria-modal="true" aria-labelledby="save-h" aria-describedby="save-p">
+      <h2 id="save-h" class="t-heading">Save this PC for next time?</h2>
+      <p id="save-p" class="t-body">If you save it, this device connects to <b id="save-pc">your PC</b> any time without a PIN. If you use it just this once, the PC forgets this device when you disconnect.</p>
+      <div class="button-stack">
+        <button id="save-yes" class="primary" type="button">Save for future use</button>
+        <button id="save-no" class="secondary" type="button">Use just this once</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ Rating -->
+  <div id="rate-dialog" class="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="rate-h">
+      <h2 id="rate-h" class="t-heading">Did you like PocketDeck?</h2>
+      <p class="t-body muted">Tap a star to rate it. Only the number of stars is sent, nothing about you.</p>
+      <div class="stars" role="radiogroup" aria-labelledby="rate-h">
+        <button type="button" role="radio" aria-checked="false" data-stars="1" aria-label="1 star"></button>
+        <button type="button" role="radio" aria-checked="false" data-stars="2" aria-label="2 stars"></button>
+        <button type="button" role="radio" aria-checked="false" data-stars="3" aria-label="3 stars"></button>
+        <button type="button" role="radio" aria-checked="false" data-stars="4" aria-label="4 stars"></button>
+        <button type="button" role="radio" aria-checked="false" data-stars="5" aria-label="5 stars"></button>
+      </div>
+      <div class="button-stack">
+        <button id="rate-later" class="secondary" type="button">Not now</button>
+        <button id="rate-never" class="menu-item muted" type="button">Don’t ask again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ Error report -->
+  <div id="report-dialog" class="sheet" hidden>
+    <div class="sheet-card" role="alertdialog" aria-modal="true" aria-labelledby="report-h" aria-describedby="report-p">
+      <h2 id="report-h" class="t-heading">Something went wrong</h2>
+      <p id="report-p" class="t-body">Send an error report to the developer? It includes the error, the app version and a list of recent actions that worked or failed. It doesn’t include your name, photo, typed text or location.</p>
+      <div class="button-stack">
+        <button id="report-send" class="primary" type="button">Send report</button>
+        <button id="report-skip" class="secondary" type="button">Don’t send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ QR scanner -->
+  <div id="scanner" class="scanner" hidden role="dialog" aria-modal="true" aria-labelledby="scan-h">
+    <video id="scan-video" playsinline muted></video>
+    <canvas id="scan-canvas" hidden></canvas>
+    <div class="scan-frame" aria-hidden="true"></div>
+    <div class="scan-bar">
+      <h2 id="scan-h" class="t-heading">Scan the QR code on your PC</h2>
+      <p id="scan-msg" class="t-small" role="status">Point the camera at the code in Connect device.</p>
+      <button id="scan-close" class="secondary" type="button">Cancel</button>
+    </div>
+  </div>
+
+  <script src="about.js"></script>
+  <script src="deck.js"></script>
+  <script src="vendor/jsQR.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

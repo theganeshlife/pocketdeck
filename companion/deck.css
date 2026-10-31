@@ -1,0 +1,421 @@
+/* PocketDeck — shared deck styles (used by the phone app and the PC editor preview). */
+
+/* ------------------------------------------------------------------ themes */
+.dk-theme, [data-theme] {
+  --accent: #6e8bff;
+}
+[data-theme="obsidian"] {
+  --bg: #0a0c11;
+  --bg-2: #12151d;
+  --glow: color-mix(in oklab, var(--accent) 22%, transparent);
+  --face-top: #2b303b;
+  --face-bot: #1b1f27;
+  --edge: #0c0e13;
+  --hi: rgba(255, 255, 255, 0.10);
+  --drop: rgba(0, 0, 0, 0.55);
+  --ink: #eef1f7;
+  --ink-soft: #9aa2b4;
+  --well: #07080c;
+  --scheme: dark;
+}
+[data-theme="graphite"] {
+  --bg: #121212;
+  --bg-2: #1a1a1b;
+  --glow: color-mix(in oklab, var(--accent) 14%, transparent);
+  --face-top: #38383c;
+  --face-bot: #252528;
+  --edge: #111112;
+  --hi: rgba(255, 255, 255, 0.09);
+  --drop: rgba(0, 0, 0, 0.5);
+  --ink: #f2f2f0;
+  --ink-soft: #a3a3a0;
+  --well: #0b0b0b;
+  --scheme: dark;
+}
+[data-theme="porcelain"] {
+  --bg: #e9ecf2;
+  --bg-2: #f6f7fa;
+  --glow: color-mix(in oklab, var(--accent) 16%, transparent);
+  --face-top: #ffffff;
+  --face-bot: #e8ebf1;
+  --edge: #c3c9d5;
+  --hi: rgba(255, 255, 255, 0.95);
+  --drop: rgba(44, 56, 84, 0.20);
+  --ink: #1f2433;
+  --ink-soft: #565d6e;
+  --well: #d9dde6;
+  --scheme: light;
+}
+[data-theme="linen"] {
+  --bg: #efe9df;
+  --bg-2: #f8f4ee;
+  --glow: color-mix(in oklab, var(--accent) 14%, transparent);
+  --face-top: #fffdf9;
+  --face-bot: #ece5d9;
+  --edge: #cdc1ad;
+  --hi: rgba(255, 255, 255, 0.95);
+  --drop: rgba(80, 60, 30, 0.20);
+  --ink: #342c22;
+  --ink-soft: #685e50;
+  --well: #e0d8ca;
+  --scheme: light;
+}
+
+/* ------------------------------------------------------------------ grid */
+.dk-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: start; /* the deck sits at the top left; spare room is only ever on the right and at the bottom */
+  container-type: size;
+}
+.dk-grid {
+  --unit: 96px; /* one normal key */
+  display: flex;
+  flex-direction: row; /* landscape: groups side by side */
+  align-items: flex-start; /* every group starts at the top (upright: at the left) */
+  justify-content: flex-start;
+  padding-bottom: var(--grid-depth, 4px); /* room for the 3D edge, the same for every group so they line up */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.dk-grid.is-portrait { flex-direction: column; } /* upright: groups stacked */
+/* One group of keys of the same size. Every key is drawn from --cell, so the whole key
+   (face, corners, edge, icon and caption) scales with its size. Rows fill from the left, so a last row
+   that isn't full lines up under the keys above it. */
+.dk-band {
+  --cell: var(--unit);
+  --gap: calc(var(--cell) * 0.16);
+  --depth: max(3px, calc(var(--cell) * 0.055));
+  --radius: calc(var(--cell) * 0.22);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-content: flex-start;
+  gap: var(--gap);
+  flex: none;
+}
+.dk-band > .dk-btn { width: var(--cell); height: var(--cell); flex: none; }
+/* The thin line between groups */
+.dk-sep { flex: none; align-self: stretch; width: calc(var(--unit) * 0.5); position: relative; }
+.dk-sep::before { content: ""; position: absolute; left: 50%; top: 4%; bottom: 4%; width: 1px; background: var(--ink-soft); opacity: 0.3; }
+.dk-grid.is-portrait .dk-sep { width: auto; height: calc(var(--unit) * 0.5); align-self: stretch; }
+.dk-grid.is-portrait .dk-sep::before { left: 4%; right: 4%; top: 50%; bottom: auto; width: auto; height: 1px; }
+.dk-empty-note { margin: 0; max-width: 300px; color: var(--ink-soft); font-size: 15px; line-height: 1.45; text-align: left; }
+
+/* Greyscale icons (deck setting): pictures and emoji lose their colour; drawn icons already use the key's text colour. */
+.dk-grid.icons-grey .dk-icon img { filter: grayscale(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)); }
+.dk-grid.icons-grey .dk-icon .dk-emoji { filter: grayscale(1); }
+
+/* ------------------------------------------------------------------ 3D key */
+.dk-btn {
+  --tint: transparent;
+  --t-face-top: var(--face-top);
+  --t-face-bot: var(--face-bot);
+  --t-edge: var(--edge);
+  --t-ink: var(--ink);
+  position: relative;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--t-ink);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--t-face-top) 0%, var(--t-face-bot) 100%);
+  box-shadow:
+    inset 0 1px 0 var(--hi),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 var(--depth) 0 var(--t-edge),
+    0 calc(var(--depth) + var(--cell) * 0.06) calc(var(--cell) * 0.16) var(--drop);
+  transform: translateY(0);
+  transition: transform 110ms cubic-bezier(.3, .7, .4, 1), box-shadow 110ms cubic-bezier(.3, .7, .4, 1), filter 160ms;
+  cursor: pointer;
+  outline: none;
+  overflow: visible;
+  touch-action: manipulation;
+}
+/* glossy sheen across the top of the key */
+.dk-btn::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px 48% 1px;
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 40% 40% / calc(var(--radius) - 1px) calc(var(--radius) - 1px) 12% 12%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.dk-btn.is-tinted {
+  --t-face-top: color-mix(in oklab, var(--tint) 88%, white 12%);
+  --t-face-bot: color-mix(in oklab, var(--tint) 92%, black 8%);
+  --t-edge: color-mix(in oklab, var(--tint) 55%, black 45%);
+  --t-ink: #ffffff;
+}
+.dk-btn.is-tinted::before { background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0)); }
+.dk-btn.is-pressed {
+  transform: translateY(var(--depth));
+  box-shadow:
+    inset 0 1px 0 var(--hi),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 0 0 var(--t-edge),
+    0 calc(var(--cell) * 0.02) calc(var(--cell) * 0.05) var(--drop);
+  filter: brightness(0.96);
+}
+.dk-btn.is-empty { opacity: 0.55; }
+
+.dk-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--cell) * 0.035);
+  pointer-events: none;
+}
+/* Icons always cover 65% of the key, whatever its size. Drawn icons are vectors and app pictures are
+   kept at 256 px, so both stay sharp on the biggest keys. */
+.dk-icon {
+  --size: 0.65;
+  width: calc(var(--cell) * var(--size));
+  height: calc(var(--cell) * var(--size));
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.dk-btn.has-caption .dk-icon { --size: 0.65; }
+.dk-icon svg { width: 100%; height: 100%; stroke-width: 1.6; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18)); shape-rendering: geometricPrecision; }
+.dk-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: calc(var(--cell) * 0.06); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)); image-rendering: auto; }
+.dk-icon .dk-emoji { font-size: calc(var(--cell) * var(--size) * 0.86); line-height: 1; }
+.dk-caption {
+  max-width: 88%;
+  font-size: max(9px, calc(var(--cell) * 0.12));
+  font-weight: 560;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--t-ink);
+  opacity: 0.86;
+}
+.dk-placeholder { width: calc(var(--cell) * 0.18); height: calc(var(--cell) * 0.18); color: var(--ink-soft); opacity: 0.5; }
+
+/* feedback ring after a press */
+.dk-btn .dk-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--radius) + 3px);
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--accent);
+  opacity: 0;
+  transition: opacity 300ms;
+}
+.dk-btn.is-ok .dk-ring { opacity: 0.9; transition: none; }
+.dk-btn.is-err .dk-ring { box-shadow: 0 0 0 2px #ff5a5f; opacity: 1; transition: none; }
+.dk-btn.is-confirm .dk-ring { box-shadow: 0 0 0 2px #ffb224; opacity: 1; animation: dk-pulse 0.7s ease-in-out infinite alternate; }
+.dk-btn .dk-confirm-label {
+  position: absolute;
+  inset: auto 0 calc(var(--cell) * 0.07) 0;
+  text-align: center;
+  font-size: max(9px, calc(var(--cell) * 0.1));
+  font-weight: 650;
+  color: #ffb224;
+  pointer-events: none;
+}
+@keyframes dk-pulse { from { opacity: 0.45; } to { opacity: 1; } }
+
+/* ------------------------------------------------------------------ caption positions */
+.dk-btn.cap-top .dk-face { flex-direction: column-reverse; }
+.dk-btn.cap-left .dk-face, .dk-btn.cap-right .dk-face { flex-direction: row; gap: calc(var(--cell) * 0.05); padding: 0 calc(var(--cell) * 0.07); }
+.dk-btn.cap-left .dk-face { flex-direction: row-reverse; }
+.dk-btn.cap-left .dk-caption, .dk-btn.cap-right .dk-caption { max-width: 50%; white-space: normal; overflow-wrap: normal; word-break: keep-all; line-height: 1.15; text-align: left; }
+.dk-btn.cap-left .dk-caption { text-align: right; }
+.dk-btn.cap-left .dk-icon, .dk-btn.cap-right .dk-icon { --size: 0.4; }
+.dk-btn.cap-center .dk-icon { --size: 0.65; opacity: 0.35; }
+.dk-btn.cap-center .dk-caption { position: absolute; inset: auto 6%; top: 50%; transform: translateY(-50%); max-width: 88%; text-align: center; font-weight: 700; opacity: 1; }
+
+
+/* ------------------------------------------------------------------ top bar: name (left), date and time (centre), weather (right) */
+.dk-topbar {
+  container-type: inline-size;
+  flex: none;
+}
+.dk-topbar-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+.dk-tb-left { min-width: 0; display: flex; justify-content: flex-start; }
+.dk-tb-right { min-width: 0; display: flex; align-items: center; justify-content: flex-end; }
+.dk-now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.dk-now-date { color: var(--ink-soft); font-weight: 500; }
+.dk-now-time { font-weight: 650; }
+.dk-now-time .dk-sec { color: var(--ink-soft); font-weight: 500; }
+.dk-now-time .dk-ampm { font-weight: 600; }
+.dk-now.is-analog .dk-now-time { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.dk-mini-face { width: 26px; height: 26px; flex: none; }
+.dk-face-ring { fill: none; stroke: var(--ink-soft); stroke-width: 5; opacity: 0.55; }
+.dk-tick { stroke: var(--ink); stroke-width: 5; stroke-linecap: round; }
+.dk-hand { stroke: var(--ink); stroke-linecap: round; }
+.dk-h { stroke-width: 9; }
+.dk-m { stroke-width: 6.5; }
+.dk-s { stroke: var(--accent); stroke-width: 3.5; }
+.dk-pin { fill: var(--accent); }
+
+.dk-wx {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.dk-wx[hidden] { display: none; }
+.dk-wx-icon { width: 22px; height: 22px; flex: none; color: var(--accent); display: grid; }
+.dk-wx-icon svg { width: 100%; height: 100%; stroke-width: 1.75; }
+.dk-wx-temp { font-weight: 650; font-variant-numeric: tabular-nums; flex: none; }
+.dk-wx-place { color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.dk-wx.is-empty .dk-wx-place { font-size: 13px; }
+
+/* "Connected for …" sits at the far right for 10 seconds; the weather slides left to make room, then back. */
+.dk-timer {
+  flex: none;
+  overflow: hidden;
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ok, #7ee2a8);
+  transition: max-width 320ms cubic-bezier(.2, .8, .2, 1), margin-left 320ms cubic-bezier(.2, .8, .2, 1), opacity 240ms;
+}
+.dk-timer.show { max-width: 220px; margin-left: 14px; opacity: 1; }
+.dk-timer .short { display: none; }
+
+/* Narrow screens (an Android phone held upright): shorter labels so everything stays on one line. */
+@container (max-width: 520px) {
+  .dk-now, .dk-wx { font-size: 13px; gap: 5px; }
+  .dk-wx-icon { width: 18px; height: 18px; }
+  .dk-mini-face { width: 22px; height: 22px; }
+  .dk-tb-left .suffix { display: none; }
+  .dk-timer .long { display: none; }
+  .dk-timer .short { display: inline; }
+  .dk-timer.show { margin-left: 10px; }
+  .dk-tb-right:has(.dk-timer.show) .dk-wx-place { display: none; }
+}
+
+/* ------------------------------------------------------------------ bottom bar: Lock (left), page dots (centre), sound and rotation (right) */
+.dk-botbar { container-type: inline-size; flex: none; }
+.dk-botbar-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: "left centre right";
+  align-items: center;
+  column-gap: 8px;
+  min-height: 52px;
+}
+.dk-bb-left { grid-area: left; display: flex; align-items: center; justify-content: flex-start; min-width: 0; }
+.dk-bb-center { grid-area: centre; display: flex; justify-content: center; }
+.dk-bb-right { grid-area: right; display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+
+/* The red Lock key: always here, can't be moved or changed. Drawn like a small key. */
+.dk-lockkey {
+  --edge-c: #8f1d22;
+  position: relative;
+  width: 48px; height: 44px;
+  margin-bottom: 4px;
+  flex: none;
+  display: grid; place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 13px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #ee5e63, #d7363c);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 0 var(--edge-c), 0 6px 12px var(--drop);
+  cursor: pointer;
+  transition: transform 110ms cubic-bezier(.3, .7, .4, 1), box-shadow 110ms cubic-bezier(.3, .7, .4, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.dk-lockkey svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.dk-lockkey.is-pressed { transform: translateY(4px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 0 var(--edge-c), 0 1px 3px var(--drop); }
+.dk-lockkey.is-ok { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 0 var(--edge-c), 0 0 0 3px var(--accent); }
+
+.dk-round {
+  width: 44px; height: 44px;
+  flex: none;
+  display: grid; place-items: center;
+  padding: 0;
+  border: 0; border-radius: 50%;
+  background: color-mix(in oklab, var(--ink) 8%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.dk-round svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dk-round.on { color: var(--accent-text, var(--accent)); background: color-mix(in oklab, var(--accent) 18%, transparent); }
+.dk-round.is-off { color: #ff7b7f; background: color-mix(in oklab, #ff5a5f 16%, transparent); }
+[data-theme="porcelain"] .dk-round.is-off, [data-theme="linen"] .dk-round.is-off { color: #c4262e; }
+.dk-round:disabled { opacity: 0.45; cursor: default; }
+
+/* Volume slider: drag along it to change the PC's volume. */
+.dk-volume {
+  --val: 50%;
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 56px;
+  max-width: 180px;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+.dk-volume::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) var(--val), color-mix(in oklab, var(--ink) 18%, transparent) var(--val));
+}
+.dk-volume::-moz-range-track { height: 6px; border-radius: 3px; background: color-mix(in oklab, var(--ink) 18%, transparent); }
+.dk-volume::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+.dk-volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  margin-top: -8px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--face-top);
+  box-shadow: 0 0 0 2px var(--accent), 0 2px 6px var(--drop);
+}
+.dk-volume::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; border: 0; background: var(--face-top); box-shadow: 0 0 0 2px var(--accent), 0 2px 6px var(--drop); }
+.dk-volume.is-muted { --accent: color-mix(in oklab, var(--ink) 40%, transparent); }
+.dk-volume:disabled { opacity: 0.45; cursor: default; }
+
+.dk-dots { display: flex; align-items: center; justify-content: center; gap: 4px; height: 44px; }
+.dk-dots button, .dk-dots i { width: 28px; height: 44px; padding: 0; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; }
+.dk-dots button::before, .dk-dots i::before { content: ""; width: 8px; height: 8px; border-radius: 4px; background: var(--ink-soft); opacity: 0.45; transition: all 200ms; }
+.dk-dots button.on::before, .dk-dots i.on::before { width: 20px; opacity: 1; background: var(--accent); }
+
+/* Narrow screens: the page dots get their own line above the controls. */
+@container (max-width: 600px) {
+  .dk-botbar-in { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "centre centre" "left right"; }
+  .dk-bb-center:has(> [hidden]) { display: none; }
+  .dk-bb-right { gap: 4px; }
+  .dk-volume { max-width: none; }
+}
