@@ -1,0 +1,139 @@
+name: Build PocketDeck
+run-name: ${{ inputs.title || github.event.head_commit.message || 'Build PocketDeck' }}
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      title:
+        description: Name shown for this run
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm install
+      - name: Add the build number to the version
+        run: node scripts/stamp-version.js
+      - name: Check app icons can be read from Windows
+        run: node scripts/check-icons.js
+      - name: Check the sound controls work on Windows
+        run: node scripts/check-audio.js
+      - run: npx electron-builder --win nsis --publish never
+      - uses: actions/upload-artifact@v7
+        with:
+          name: PocketDeck-Windows
+          path: dist/*.exe
+
+  android:
+    name: Android app
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Add the build number to the version
+        run: node scripts/stamp-version.js
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: 9.8.2
+          cache-provider: basic
+      - name: Restore release signing key
+        env:
+          PD_KEYSTORE_BASE64: ${{ secrets.PD_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$PD_KEYSTORE_BASE64" ]; then
+            echo "$PD_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/pocketdeck.jks"
+            echo "PD_KEYSTORE=$RUNNER_TEMP/pocketdeck.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No PD_KEYSTORE_BASE64 secret: the APK is signed with the debug key."
+          fi
+      - run: gradle -p android assembleRelease
+        env:
+          PD_KEYSTORE_PASSWORD: ${{ secrets.PD_KEYSTORE_PASSWORD }}
+          PD_KEY_ALIAS: ${{ secrets.PD_KEY_ALIAS }}
+          PD_KEY_PASSWORD: ${{ secrets.PD_KEY_PASSWORD }}
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pocketdeck.jks"
+      - run: cp android/app/build/outputs/apk/release/app-release.apk PocketDeck.apk
+      - name: Check the deck is bundled in the app
+        run: |
+          for f in assets/www/index.html assets/www/app.js assets/www/deck.js assets/www/vendor/jsQR.js; do
+            unzip -l PocketDeck.apk | grep -q " $f$" || { echo "::error::$f is missing from the APK"; exit 1; }
+          done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: PocketDeck-Android
+          path: PocketDeck.apk
+
+  release:
+    name: Tag and release
+    needs: [windows, android]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Work out the version
+        id: version
+        run: |
+          base=$(node -p "require('./package.json').version")
+          node scripts/stamp-version.js
+          full=$(node -p "require('./package.json').version")
+          build=${full##*-b}
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "full=$full" >> "$GITHUB_OUTPUT"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "tag=v$full" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v7
+        with:
+          path: built
+      - name: Name the files
+        run: |
+          mkdir release
+          cp built/PocketDeck-Windows/*.exe "release/PocketDeck-${{ steps.version.outputs.full }}-Windows-Setup.exe"
+          cp built/PocketDeck-Android/PocketDeck.apk "release/PocketDeck-${{ steps.version.outputs.full }}-Android.apk"
+          ls -l release
+      - name: Write the release notes
+        run: |
+          {
+            echo "**PocketDeck for Windows** and **PocketDeck for Android**, Version ${{ steps.version.outputs.base }} Build ${{ steps.version.outputs.build }}."
+            echo
+            echo "- Windows: download the \`Windows-Setup.exe\` file and run it. It installs just for your Windows account and keeps your deck when installed over an older build."
+            echo "- Android: download the \`.apk\` file on your Android device and open it (allow *Install unknown apps* when asked)."
+            echo
+            awk -v v="## ${{ steps.version.outputs.base }}" '$0==v{on=1;next} /^## /{if(on)exit} on' CHANGELOG.md
+          } > notes.md
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; updating its files."
+            gh release upload "$TAG" release/* --clobber
+          else
+            gh release create "$TAG" release/* \
+              --target "$GITHUB_SHA" \
+              --title "PocketDeck ${{ steps.version.outputs.base }} Build ${{ steps.version.outputs.build }}" \
+              --notes-file notes.md \
+              --prerelease
+          fi
